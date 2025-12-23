@@ -584,10 +584,30 @@
             text-transform: uppercase;
         }
         
-        .operation-header-buttons {
+        .operation-header-left {
             display: flex;
-            gap: 8px;
             align-items: center;
+            gap: 8px;
+        }
+        
+        .operation-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .operation-nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: 16px;
+        }
+        
+        .operation-nav-info {
+            font-size: 13px;
+            color: #555;
+            font-weight: 600;
+            white-space: nowrap;
         }
         
         /* New button styles for add/remove operations in the form */
@@ -633,22 +653,11 @@
             background-color: #c0392b;
         }
         
-        /* Operation Navigation Controls - NEW */
-        .operation-nav-controls {
+        /* Operation Navigation Controls - UPDATED */
+        .operation-nav-controls-in-card {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-top: 16px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #eaeaea;
-        }
-        
-        .operation-nav-info {
-            font-size: 13px;
-            color: #555;
-            font-weight: 600;
+            gap: 12px;
         }
         
         .operation-nav-buttons {
@@ -657,10 +666,10 @@
         }
         
         .nav-btn {
-            padding: 8px 16px;
+            padding: 6px 12px;
             border: none;
-            border-radius: 5px;
-            font-size: 13px;
+            border-radius: 4px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
@@ -669,6 +678,7 @@
             transition: all 0.3s;
             background-color: #3498db;
             color: white;
+            white-space: nowrap;
         }
         
         .nav-btn:hover {
@@ -1255,9 +1265,22 @@
                 width: 100%;
             }
             
-            .operation-header-buttons {
+            .operation-header {
                 flex-direction: column;
-                gap: 4px;
+                align-items: stretch;
+                gap: 12px;
+            }
+            
+            .operation-header-left, .operation-header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .operation-nav-controls {
+                margin-left: 0;
+                margin-top: 8px;
+                justify-content: center;
+                width: 100%;
             }
             
             .btn-add-operation,
@@ -1269,11 +1292,6 @@
             
             .operation-inputs {
                 grid-template-columns: 1fr;
-            }
-            
-            .operation-nav-controls {
-                flex-direction: column;
-                gap: 12px;
             }
             
             .operation-nav-buttons {
@@ -1337,6 +1355,15 @@
                 height: 26px;
                 font-size: 10px;
                 padding: 0 6px;
+            }
+            
+            .nav-btn {
+                font-size: 11px;
+                padding: 6px 8px;
+            }
+            
+            .operation-nav-info {
+                font-size: 12px;
             }
         }
     </style>
@@ -1495,20 +1522,7 @@
                 </div>
             </div>
             
-            <!-- Operation Navigation Controls - NEW -->
-            <div class="operation-nav-controls" id="operation-nav-controls" style="display: none;">
-                <div class="operation-nav-info">
-                    Operation <span id="current-op-number">1</span> of <span id="total-ops-count">1</span>
-                </div>
-                <div class="operation-nav-buttons">
-                    <button class="nav-btn nav-btn-prev" id="prev-op-btn" onclick="switchOperation(-1)">
-                        <i class="fas fa-chevron-left"></i> Previous
-                    </button>
-                    <button class="nav-btn" id="next-op-btn" onclick="switchOperation(1)">
-                        Next <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
+            <!-- Operation Navigation Controls - REMOVED (now in operation header) -->
             
             <div class="controls">
                 <button type="button" class="layout-toggle-btn vertical" id="layoutToggleBtn" onclick="toggleLayout()">
@@ -1828,7 +1842,10 @@
                 layoutBtn.className = 'layout-toggle-btn horizontal';
                 operationsContainer.classList.remove('vertical');
                 operationsContainer.classList.add('horizontal');
-                document.getElementById('operation-nav-controls').style.display = 'none';
+                // Hide navigation controls in all operation cards in horizontal layout
+                document.querySelectorAll('.operation-nav-controls-in-card').forEach(nav => {
+                    nav.style.display = 'none';
+                });
             } else {
                 currentLayout = 'vertical';
                 layoutBtn.innerHTML = '<i class="fas fa-list"></i> Switch to Horizontal';
@@ -1892,31 +1909,41 @@
                 }
             });
             
-            // Update navigation controls
+            // Update navigation controls in all operation cards
             updateNavigationControls();
         }
 
-        // Update navigation controls
+        // Update navigation controls in each operation card
         function updateNavigationControls() {
             const operations = document.querySelectorAll('.operation-card');
-            const navControls = document.getElementById('operation-nav-controls');
-            const currentOpNumber = document.getElementById('current-op-number');
-            const totalOpsCount = document.getElementById('total-ops-count');
-            const prevBtn = document.getElementById('prev-op-btn');
-            const nextBtn = document.getElementById('next-op-btn');
+            const totalOps = operations.length;
             
-            if (operations.length <= 1 || currentLayout === 'horizontal') {
-                navControls.style.display = 'none';
-                return;
-            }
-            
-            navControls.style.display = 'flex';
-            currentOpNumber.textContent = currentOperation;
-            totalOpsCount.textContent = operations.length;
-            
-            // Update button states
-            prevBtn.disabled = operations.length <= 1;
-            nextBtn.disabled = operations.length <= 1;
+            operations.forEach((card, index) => {
+                const opId = index + 1;
+                const navControls = card.querySelector('.operation-nav-controls-in-card');
+                const currentOpSpan = card.querySelector('.current-op-number');
+                const totalOpsSpan = card.querySelector('.total-ops-count');
+                const prevBtn = card.querySelector('.nav-btn-prev');
+                const nextBtn = card.querySelector('.nav-btn-next');
+                
+                if (navControls) {
+                    if (totalOps <= 1 || currentLayout === 'horizontal') {
+                        navControls.style.display = 'none';
+                    } else {
+                        navControls.style.display = 'flex';
+                    }
+                    
+                    if (currentOpSpan) currentOpSpan.textContent = currentOperation;
+                    if (totalOpsSpan) totalOpsSpan.textContent = totalOps;
+                    
+                    if (prevBtn) {
+                        prevBtn.disabled = totalOps <= 1;
+                    }
+                    if (nextBtn) {
+                        nextBtn.disabled = totalOps <= 1;
+                    }
+                }
+            });
         }
 
         // Modal Functions
@@ -2132,7 +2159,7 @@
             showModal("Preset Loaded", `Loaded ${operations.length} operations for ${garmentType}.`);
         }
 
-        // Operation Management
+        // Operation Management - UPDATED with navigation controls in header
         function addOperation(name, cycleTime, unit, rating, allowance, targetEff = 70, machineType = 'SNLS') {
             operationCount++;
             const opId = operationCount;
@@ -2149,15 +2176,28 @@
             operationTab.onclick = () => switchToOperation(opId);
             operationTabs.appendChild(operationTab);
             
-            // Create operation card
+            // Create operation card with navigation controls in header
             const operation = document.createElement('div');
             operation.className = 'operation-card';
             operation.id = `operation-${opId}`;
             operation.style.display = currentLayout === 'vertical' && opId !== 1 ? 'none' : 'flex';
             operation.innerHTML = `
                 <div class="operation-header">
-                    <div class="operation-number-btn">OP#${opId}</div>
-                    <div class="operation-header-buttons">
+                    <div class="operation-header-left">
+                        <div class="operation-number-btn">OP#${opId}</div>
+                        <div class="operation-nav-controls-in-card" style="display: none;">
+                            <div class="operation-nav-info">Operation <span class="current-op-number">${currentOperation}</span> of <span class="total-ops-count">${operationCount}</span></div>
+                            <div class="operation-nav-buttons">
+                                <button class="nav-btn nav-btn-prev" onclick="switchOperation(-1)">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </button>
+                                <button class="nav-btn nav-btn-next" onclick="switchOperation(1)">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="operation-header-right">
                         <button type="button" class="btn-add-operation" onclick="addNewOperation()">
                             <i class="fas fa-plus"></i> + Add
                         </button>
@@ -2584,7 +2624,7 @@
                     currentOperation = 1;
                     addNewOperation();
                     document.getElementById('summary-section').style.display = 'none';
-                    document.getElementById('operation-nav-controls').style.display = 'none';
+                    updateNavigationControls();
                     showModal("Cleared", "All operations have been cleared.");
                 }
             );
