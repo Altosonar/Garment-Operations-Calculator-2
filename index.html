@@ -466,25 +466,7 @@
             color: white;
         }
         
-        .add-operation-tab {
-            padding: 10px 12px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            color: #2ecc71;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
-        
-        .add-operation-tab:hover {
-            color: #27ae60;
-            background: rgba(46, 204, 113, 0.1);
-        }
+        /* Removed the .add-operation-tab style as we removed the "+ Add" tab */
         
         .operations-container-wrapper {
             flex: 1;
@@ -608,43 +590,46 @@
             align-items: center;
         }
         
-        .add-operation-btn {
+        /* New button styles for add/remove operations in the form */
+        .btn-add-operation {
             background-color: #2ecc71;
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 26px;
-            height: 26px;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 4px;
             transition: background-color 0.2s;
-            font-weight: bold;
+            min-width: 80px;
         }
         
-        .add-operation-btn:hover {
+        .btn-add-operation:hover {
             background-color: #27ae60;
         }
         
-        .remove-operation-btn {
+        .btn-remove-operation {
             background-color: #e74c3c;
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 26px;
-            height: 26px;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 4px;
             transition: background-color 0.2s;
-            font-weight: bold;
+            min-width: 80px;
         }
         
-        .remove-operation-btn:hover {
+        .btn-remove-operation:hover {
             background-color: #c0392b;
         }
         
@@ -1275,8 +1260,8 @@
                 gap: 4px;
             }
             
-            .add-operation-btn,
-            .remove-operation-btn {
+            .btn-add-operation,
+            .btn-remove-operation {
                 width: 100%;
                 border-radius: 5px;
                 height: 32px;
@@ -1499,7 +1484,7 @@
                 </div>
             </div>
             
-            <!-- Operation Tabs - NEW -->
+            <!-- Operation Tabs - Updated: No "+ Add" tab -->
             <div class="operation-tabs" id="operation-tabs">
                 <!-- Operation tabs will be dynamically added here -->
             </div>
@@ -2164,15 +2149,6 @@
             operationTab.onclick = () => switchToOperation(opId);
             operationTabs.appendChild(operationTab);
             
-            // Add operation tab for adding new operations
-            if (opId === 1) {
-                const addTab = document.createElement('button');
-                addTab.className = 'add-operation-tab';
-                addTab.innerHTML = '<i class="fas fa-plus"></i> Add';
-                addTab.onclick = addNewOperation;
-                operationTabs.appendChild(addTab);
-            }
-            
             // Create operation card
             const operation = document.createElement('div');
             operation.className = 'operation-card';
@@ -2182,8 +2158,12 @@
                 <div class="operation-header">
                     <div class="operation-number-btn">OP#${opId}</div>
                     <div class="operation-header-buttons">
-                        <button type="button" class="add-operation-btn" onclick="addNewOperation()">+</button>
-                        <button type="button" class="remove-operation-btn" onclick="removeOperation(${opId})">-</button>
+                        <button type="button" class="btn-add-operation" onclick="addNewOperation()">
+                            <i class="fas fa-plus"></i> + Add
+                        </button>
+                        <button type="button" class="btn-remove-operation" onclick="removeOperation(${opId})">
+                            <i class="fas fa-minus"></i> - Remove
+                        </button>
                     </div>
                 </div>
                 
@@ -2556,7 +2536,7 @@
                     operationBtn.textContent = `OP#${newId}`;
                 }
                 
-                op.querySelector('.remove-operation-btn').setAttribute('onclick', `removeOperation(${newId})`);
+                op.querySelector('.btn-remove-operation').setAttribute('onclick', `removeOperation(${newId})`);
                 
                 ['name', 'cycle', 'unit', 'rating', 'allowance', 'target-eff', 'machine-type', 'sam', 'pieces'].forEach(field => {
                     const elem = op.querySelector(`[id*="${field}"]`);
@@ -2572,7 +2552,6 @@
             // Renumber tabs
             const operationTabs = document.getElementById('operation-tabs');
             const tabs = operationTabs.querySelectorAll('.operation-tab');
-            const addTab = operationTabs.querySelector('.add-operation-tab');
             
             operationTabs.innerHTML = '';
             
@@ -2588,10 +2567,6 @@
                 }
                 operationTabs.appendChild(tab);
             });
-            
-            if (addTab) {
-                operationTabs.appendChild(addTab);
-            }
         }
 
         function clearAllOperations() {
