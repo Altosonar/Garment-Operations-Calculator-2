@@ -407,15 +407,64 @@
             }
         }
         
-        /* Operations Tabs - NEW */
-        .operation-tabs {
+        /* Operations Tabs - UPDATED with scrollable container */
+        .operation-tabs-container {
             display: flex;
             background: #f8f9fa;
             border-bottom: 2px solid #e0e0e0;
-            overflow-x: auto;
             flex-shrink: 0;
-            padding: 0 8px;
             min-height: 44px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .operation-tabs-scrollable {
+            display: flex;
+            overflow-x: auto;
+            flex: 1;
+            min-width: 0;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db #f1f1f1;
+        }
+        
+        .operation-tabs-scrollable::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .operation-tabs-scrollable::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 8px;
+        }
+        
+        .operation-tabs-scrollable::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 8px;
+        }
+        
+        .clear-all-static {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #e74c3c;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            position: relative;
+            z-index: 2;
+            border-bottom: 3px solid #e74c3c;
+        }
+        
+        .clear-all-static:hover {
+            color: #c0392b;
+            border-bottom-color: #c0392b;
+            background: rgba(231, 76, 60, 0.1);
         }
         
         .operation-tab {
@@ -433,6 +482,7 @@
             align-items: center;
             gap: 6px;
             position: relative;
+            flex-shrink: 0;
         }
         
         .operation-tab:hover {
@@ -444,10 +494,6 @@
             border-bottom: 3px solid #3498db;
             background: white;
         }
-        
-        /* Removed the operation-tab-close style */
-        
-        /* Removed the .add-operation-tab style as we removed the "+ Add" tab */
         
         .operations-container-wrapper {
             flex: 1;
@@ -469,6 +515,23 @@
             overflow-y: auto;
             height: auto;
             align-items: stretch;
+            max-height: 500px;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db #f1f1f1;
+        }
+        
+        .operations-container.vertical::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .operations-container.vertical::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 8px;
+        }
+        
+        .operations-container.vertical::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 8px;
         }
         
         .operations-container.horizontal {
@@ -482,10 +545,12 @@
             align-items: flex-start;
             flex-wrap: nowrap;
             min-height: 384px;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db #f1f1f1;
         }
         
         .operations-container.horizontal::-webkit-scrollbar {
-            height: 6px;
+            height: 8px;
         }
         
         .operations-container.horizontal::-webkit-scrollbar-track {
@@ -1492,9 +1557,15 @@
                 </div>
             </div>
             
-            <!-- Operation Tabs - Updated: No "+ Add" tab -->
-            <div class="operation-tabs" id="operation-tabs">
-                <!-- Operation tabs will be dynamically added here -->
+            <!-- Operation Tabs - Updated with static Clear All button -->
+            <div class="operation-tabs-container">
+                <div class="operation-tabs-scrollable" id="operation-tabs-scrollable">
+                    <!-- Operation tabs will be dynamically added here -->
+                </div>
+                <!-- Static Clear All button always visible -->
+                <button class="clear-all-static" onclick="clearAllOperations()">
+                    <i class="fas fa-eraser"></i> Clear All
+                </button>
             </div>
             
             <div class="operations-container-wrapper">
@@ -1502,8 +1573,6 @@
                     <!-- Operations will be dynamically added here -->
                 </div>
             </div>
-            
-            <!-- Operation Navigation Controls - REMOVED (now in operation header) -->
             
             <div class="controls">
                 <button type="button" class="layout-toggle-btn vertical" id="layoutToggleBtn" onclick="toggleLayout()">
@@ -1521,9 +1590,6 @@
                 </button>
                 <button type="button" class="btn btn-warning" onclick="exportToExcel()">
                     <i class="fas fa-file-excel"></i> Export
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="clearAllOperations()">
-                    <i class="fas fa-eraser"></i> Clear All
                 </button>
             </div>
             
@@ -1858,18 +1924,25 @@
             }
         }
 
-        // Switch to specific operation
+        // Switch to specific operation - FIXED: Now correctly shows the next operation number
         function switchToOperation(opId) {
             currentOperation = opId;
             
             // Update active tab
-            document.querySelectorAll('.operation-tab').forEach((tab, index) => {
+            const scrollableTabs = document.querySelectorAll('.operation-tab');
+            scrollableTabs.forEach((tab, index) => {
                 if (index + 1 === opId) {
                     tab.classList.add('active');
                 } else {
                     tab.classList.remove('active');
                 }
             });
+            
+            // Scroll the active tab into view
+            const activeTab = document.getElementById(`operation-tab-${opId}`);
+            if (activeTab) {
+                activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
             
             if (currentLayout === 'vertical') {
                 // For vertical layout: show only the selected operation
@@ -1909,7 +1982,7 @@
             updateNavigationControls();
         }
 
-        // Switch between operations
+        // Switch between operations - FIXED: Now correctly increments by 1
         function switchOperation(direction) {
             const operations = document.querySelectorAll('.operation-card');
             if (operations.length <= 1) return;
@@ -1927,7 +2000,7 @@
             switchToOperation(currentOperation);
         }
 
-        // Update navigation controls in each operation card
+        // Update navigation controls in each operation card - FIXED: Shows correct operation numbers
         function updateNavigationControls() {
             const operations = document.querySelectorAll('.operation-card');
             const totalOps = operations.length;
@@ -2125,7 +2198,7 @@
             setGarmentType(garmentType);
             
             document.getElementById('operations-container').innerHTML = '';
-            document.getElementById('operation-tabs').innerHTML = '';
+            document.getElementById('operation-tabs-scrollable').innerHTML = '';
             operationCount = 0;
             
             if (savedGarments[garmentType]) {
@@ -2146,7 +2219,7 @@
             }
             
             document.getElementById('operations-container').innerHTML = '';
-            document.getElementById('operation-tabs').innerHTML = '';
+            document.getElementById('operation-tabs-scrollable').innerHTML = '';
             operationCount = 0;
             
             let presetKey = Object.keys(garmentPresets).find(key => 
@@ -2173,19 +2246,19 @@
             showModal("Preset Loaded", `Loaded ${operations.length} operations for ${garmentType}.`);
         }
 
-        // Operation Management - UPDATED: No X button in tabs, only icons in operation form buttons
+        // Operation Management
         function addOperation(name, cycleTime, unit, rating, allowance, targetEff = 70, machineType = 'SNLS') {
             operationCount++;
             const opId = operationCount;
             
-            // Create operation tab - WITHOUT CLOSE BUTTON
-            const operationTabs = document.getElementById('operation-tabs');
+            // Create operation tab in scrollable container
+            const operationTabsScrollable = document.getElementById('operation-tabs-scrollable');
             const operationTab = document.createElement('button');
             operationTab.className = `operation-tab ${opId === 1 ? 'active' : ''}`;
             operationTab.id = `operation-tab-${opId}`;
             operationTab.textContent = `OP#${opId}`;
             operationTab.onclick = () => switchToOperation(opId);
-            operationTabs.appendChild(operationTab);
+            operationTabsScrollable.appendChild(operationTab);
             
             // Create operation card with navigation controls in header
             const operation = document.createElement('div');
@@ -2595,11 +2668,12 @@
                 });
             });
             
-            // Renumber tabs
-            const operationTabs = document.getElementById('operation-tabs');
-            const tabs = operationTabs.querySelectorAll('.operation-tab');
+            // Renumber tabs in scrollable container
+            const operationTabsScrollable = document.getElementById('operation-tabs-scrollable');
             
-            operationTabs.innerHTML = '';
+            // Remove all operation tabs
+            const tabs = operationTabsScrollable.querySelectorAll('.operation-tab');
+            operationTabsScrollable.innerHTML = '';
             
             tabs.forEach((tab, index) => {
                 const newId = index + 1;
@@ -2611,7 +2685,7 @@
                 } else {
                     tab.classList.remove('active');
                 }
-                operationTabs.appendChild(tab);
+                operationTabsScrollable.appendChild(tab);
             });
         }
 
@@ -2625,7 +2699,7 @@
             showModal("Confirm", "Clear all operations?", true,
                 () => {
                     document.getElementById('operations-container').innerHTML = '';
-                    document.getElementById('operation-tabs').innerHTML = '';
+                    document.getElementById('operation-tabs-scrollable').innerHTML = '';
                     operationCount = 0;
                     currentOperation = 1;
                     addNewOperation();
