@@ -294,7 +294,7 @@
             cursor: help;
             position: relative;
             user-select: none;
-            transition: background-color 0.2s;
+                            transition: background-color 0.2s;
             z-index: 100;
             flex-shrink: 0;
         }
@@ -445,26 +445,7 @@
             background: white;
         }
         
-        .operation-tab-close {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 12px;
-            cursor: pointer;
-            padding: 0;
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s;
-        }
-        
-        .operation-tab-close:hover {
-            background: #e74c3c;
-            color: white;
-        }
+        /* Removed the operation-tab-close style */
         
         /* Removed the .add-operation-tab style as we removed the "+ Add" tab */
         
@@ -1842,6 +1823,16 @@
                 layoutBtn.className = 'layout-toggle-btn horizontal';
                 operationsContainer.classList.remove('vertical');
                 operationsContainer.classList.add('horizontal');
+                // Show all operations in horizontal layout
+                const operations = document.querySelectorAll('.operation-card');
+                operations.forEach((card, index) => {
+                    const opId = index + 1;
+                    card.style.display = 'flex';
+                    // Set initial order
+                    card.style.order = opId;
+                });
+                // Ensure selected operation is on the left
+                switchToOperation(currentOperation);
                 // Hide navigation controls in all operation cards in horizontal layout
                 document.querySelectorAll('.operation-nav-controls-in-card').forEach(nav => {
                     nav.style.display = 'none';
@@ -1852,30 +1843,70 @@
                 layoutBtn.className = 'layout-toggle-btn vertical';
                 operationsContainer.classList.remove('horizontal');
                 operationsContainer.classList.add('vertical');
+                // Reset order property
+                const operations = document.querySelectorAll('.operation-card');
+                operations.forEach(card => {
+                    card.style.order = '';
+                });
+                // Show only current operation in vertical layout
+                const operations2 = document.querySelectorAll('.operation-card');
+                operations2.forEach((card, index) => {
+                    const opId = index + 1;
+                    card.style.display = opId === currentOperation ? 'flex' : 'none';
+                });
                 updateNavigationControls();
             }
-            
-            updateOperationCardsForLayout();
         }
 
-        function updateOperationCardsForLayout() {
-            const operations = document.querySelectorAll('.operation-card');
-            operations.forEach(card => {
-                if (currentLayout === 'horizontal') {
-                    card.style.minWidth = '304px';
-                    card.style.maxWidth = '304px';
-                    card.style.height = '448px';
-                    card.style.flexShrink = '0';
-                    card.style.display = 'flex';
+        // Switch to specific operation
+        function switchToOperation(opId) {
+            currentOperation = opId;
+            
+            // Update active tab
+            document.querySelectorAll('.operation-tab').forEach((tab, index) => {
+                if (index + 1 === opId) {
+                    tab.classList.add('active');
                 } else {
-                    card.style.minWidth = '0';
-                    card.style.maxWidth = '100%';
-                    card.style.height = 'auto';
-                    card.style.flexShrink = 'unset';
-                    const opId = parseInt(card.id.replace('operation-', ''));
-                    card.style.display = opId === currentOperation ? 'flex' : 'none';
+                    tab.classList.remove('active');
                 }
             });
+            
+            if (currentLayout === 'vertical') {
+                // For vertical layout: show only the selected operation
+                const operations = document.querySelectorAll('.operation-card');
+                operations.forEach((card, index) => {
+                    const cardOpId = index + 1;
+                    card.style.display = cardOpId === opId ? 'flex' : 'none';
+                });
+            } else {
+                // For horizontal layout: reorder operations to bring selected to left
+                const operationsContainer = document.getElementById('operations-container');
+                const operations = document.querySelectorAll('.operation-card');
+                
+                // Calculate new order values
+                operations.forEach((card, index) => {
+                    const cardOpId = index + 1;
+                    
+                    if (cardOpId === opId) {
+                        // Selected operation gets order 1 (leftmost)
+                        card.style.order = 1;
+                    } else if (cardOpId < opId) {
+                        // Operations before selected get higher order (to the right)
+                        card.style.order = cardOpId + operations.length;
+                    } else {
+                        // Operations after selected get normal order (to the right of selected)
+                        card.style.order = cardOpId;
+                    }
+                    
+                    // Ensure all operations are visible
+                    card.style.display = 'flex';
+                });
+                
+                // Scroll to show the leftmost operation (selected one)
+                operationsContainer.scrollLeft = 0;
+            }
+            
+            updateNavigationControls();
         }
 
         // Switch between operations
@@ -1891,26 +1922,9 @@
                 newOperation = 1;
             }
             
-            // Update current operation
+            // Update current operation and switch to it
             currentOperation = newOperation;
-            
-            // Update operation display
-            operations.forEach((card, index) => {
-                const opId = index + 1;
-                card.style.display = opId === currentOperation ? 'flex' : 'none';
-            });
-            
-            // Update active tab
-            document.querySelectorAll('.operation-tab').forEach((tab, index) => {
-                if (index + 1 === currentOperation) {
-                    tab.classList.add('active');
-                } else {
-                    tab.classList.remove('active');
-                }
-            });
-            
-            // Update navigation controls in all operation cards
-            updateNavigationControls();
+            switchToOperation(currentOperation);
         }
 
         // Update navigation controls in each operation card
@@ -2159,20 +2173,17 @@
             showModal("Preset Loaded", `Loaded ${operations.length} operations for ${garmentType}.`);
         }
 
-        // Operation Management - UPDATED with navigation controls in header
+        // Operation Management - UPDATED: No X button in tabs, only icons in operation form buttons
         function addOperation(name, cycleTime, unit, rating, allowance, targetEff = 70, machineType = 'SNLS') {
             operationCount++;
             const opId = operationCount;
             
-            // Create operation tab
+            // Create operation tab - WITHOUT CLOSE BUTTON
             const operationTabs = document.getElementById('operation-tabs');
             const operationTab = document.createElement('button');
             operationTab.className = `operation-tab ${opId === 1 ? 'active' : ''}`;
             operationTab.id = `operation-tab-${opId}`;
-            operationTab.innerHTML = `
-                OP#${opId}
-                <button class="operation-tab-close" onclick="removeOperationTab(${opId}, event)">&times;</button>
-            `;
+            operationTab.textContent = `OP#${opId}`;
             operationTab.onclick = () => switchToOperation(opId);
             operationTabs.appendChild(operationTab);
             
@@ -2180,7 +2191,14 @@
             const operation = document.createElement('div');
             operation.className = 'operation-card';
             operation.id = `operation-${opId}`;
-            operation.style.display = currentLayout === 'vertical' && opId !== 1 ? 'none' : 'flex';
+            operation.style.order = opId; // Add order for horizontal layout
+            
+            if (currentLayout === 'vertical') {
+                operation.style.display = opId === currentOperation ? 'flex' : 'none';
+            } else {
+                operation.style.display = 'flex';
+            }
+            
             operation.innerHTML = `
                 <div class="operation-header">
                     <div class="operation-header-left">
@@ -2199,10 +2217,10 @@
                     </div>
                     <div class="operation-header-right">
                         <button type="button" class="btn-add-operation" onclick="addNewOperation()">
-                            <i class="fas fa-plus"></i> + Add
+                            <i class="fas fa-plus"></i> Add
                         </button>
                         <button type="button" class="btn-remove-operation" onclick="removeOperation(${opId})">
-                            <i class="fas fa-minus"></i> - Remove
+                            <i class="fas fa-minus"></i> Remove
                         </button>
                     </div>
                 </div>
@@ -2363,36 +2381,18 @@
             calculateSAM(opId);
             document.getElementById('summary-section').style.display = 'none';
             
-            initTooltipsForOperation(opId);
-            updateOperationCardsForLayout();
-            updateNavigationControls();
-        }
-
-        // Switch to specific operation
-        function switchToOperation(opId) {
-            currentOperation = opId;
-            
-            const operations = document.querySelectorAll('.operation-card');
-            operations.forEach((card, index) => {
-                const cardOpId = index + 1;
-                card.style.display = cardOpId === opId ? 'flex' : 'none';
-            });
-            
-            document.querySelectorAll('.operation-tab').forEach((tab, index) => {
-                if (index + 1 === opId) {
-                    tab.classList.add('active');
-                } else {
-                    tab.classList.remove('active');
+            // If in horizontal layout, reorder operations to bring selected to left
+            if (currentLayout === 'horizontal') {
+                switchToOperation(currentOperation);
+            } else {
+                // In vertical layout, hide the new operation if it's not the current one
+                if (opId !== currentOperation) {
+                    operation.style.display = 'none';
                 }
-            });
+            }
             
+            initTooltipsForOperation(opId);
             updateNavigationControls();
-        }
-
-        // Remove operation tab
-        function removeOperationTab(opId, event) {
-            event.stopPropagation();
-            removeOperation(opId);
         }
 
         // Initialize tooltips for a specific operation
@@ -2557,6 +2557,12 @@
                     
                     renumberOperations();
                     document.getElementById('summary-section').style.display = 'none';
+                    
+                    // If in horizontal layout, reorder the operations
+                    if (currentLayout === 'horizontal') {
+                        switchToOperation(currentOperation);
+                    }
+                    
                     calculateAllOperations();
                     updateNavigationControls();
                 }
@@ -2598,7 +2604,7 @@
             tabs.forEach((tab, index) => {
                 const newId = index + 1;
                 tab.id = `operation-tab-${newId}`;
-                tab.innerHTML = `OP#${newId}<button class="operation-tab-close" onclick="removeOperationTab(${newId}, event)">&times;</button>`;
+                tab.textContent = `OP#${newId}`;
                 tab.onclick = () => switchToOperation(newId);
                 if (newId === currentOperation) {
                     tab.classList.add('active');
